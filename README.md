@@ -42,10 +42,11 @@ The analysis uses data from the World Bank's two datasets:
 
 ## Robustness Checks
 
+
 ## Repository Structure
 
-Russia-Ukraine-War-Diet-Cost/ 
-│
+```text
+Russia-Ukraine-War-Diet-Cost/
 ├── README.md
 ├── egypt-healthy-diet-synthetic-control.Rmd
 ├── egypt-healthy-diet-synthetic-control.pdf
@@ -56,7 +57,8 @@ Russia-Ukraine-War-Diet-Cost/
 ├── figures/
 │   ├── actual-vs-synthetic-egypt.pdf
 │   ├── gap-plot.pdf
-│   ├── placebo-plot.pdf
+│   └── placebo-plot.pdf
 └── .gitignore
+```
 
 ## Skills Demonstrated
