@@ -32,11 +32,20 @@ The analysis uses data from the World Bank's two datasets:
 ### Study Period
 
 - **Pre-treatment period:** 2017–2021
-- **Treatment begins:** 2022-2024, following the onset of the Russia–Ukraine war.
+- **Post-treatment period:** 2022-2024, following the onset of the Russia–Ukraine war.
 
 ## Methodology
 
+This study uses the Synthetic Control Method (SCM) to estimate the impact of the Russia–Ukraine war on the cost of a healthy diet in Egypt. 
+The method constructs a synthetic version of Egypt as a weighted combination of comparable countries to approximate Egypt's pre-treatment outcome trajectory.
 
+Egypt is the treated country, and the donor pool consists of 11 countries with comparable economic and demographic characteristics. 
+The outcome variable is the cost of a healthy diet per person per day (PPP USD). Predictors include GDP per capita, inflation, exchange rate, 
+agriculture, forestry, and fishing value added as a percentage of GDP, trade as a percentage of GDP, total population, urban population, and lagged diet costs.
+
+The model is fitted using the pre-treatment period (2017–2021), with 2022 designated as the start of the treatment period. 
+The observed cost of a healthy diet in Egypt is then compared with the estimated synthetic counterfactual for 2022–2024. 
+The difference between the two trajectories represents the estimated treatment effect.
 
 ## Results
 
