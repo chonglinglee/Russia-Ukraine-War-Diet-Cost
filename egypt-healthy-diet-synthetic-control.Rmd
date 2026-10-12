@@ -1,0 +1,556 @@
+---
+title: "Russia Ukraine-War's Impact on the Cost of a Healthy Diet"
+output:
+  pdf_document: default
+  html_document: default
+date: "2026-08-10"
+---
+
+```{r setup, include=FALSE}
+library(readr)
+library(dplyr)
+library(tidyr)
+library(Synth)
+library(tidyverse)
+
+root_path <- here::here()
+data_path <- file.path(root_path, "data")
+
+# Create a folder for figures if it doesn't exist
+if (!dir.exists("figures")) {
+  dir.create("figures")
+}
+
+# Save generated figures in the figures folder
+knitr::opts_chunk$set(
+  fig.path = "figures/"
+)
+
+food_prices_data <- read_csv(file.path(data_path, "price_of_healthy_diet_clean.csv"))
+world_development_data <- read_csv(file.path(data_path, "world_bank_indicators.csv"))
+```
+
+# Introduction
+
+This study examines whether the Russia–Ukraine war increased the cost of 
+a healthy diet in Egypt relative to a synthetic counterfactual constructed 
+from comparable middle-income countries. Using the Synthetic Control Method (SCM), 
+the analysis estimates how healthy diet costs in Egypt might have evolved 
+in the absence of the shock.
+
+# Data Preparation
+
+```{r clean-dataset}
+# rename dataset
+world_development_data <- world_development_data %>%
+  rename(
+    country = `Country Name`,
+    country_code = `Country Code`,
+    year = `Time`,
+    time_code = `Time Code`,
+    gdp = `GDP per capita, PPP (constant 2021 international $)`,
+    inflation = `Inflation, GDP deflator (annual %)`,
+    exchange_rate = `Official exchange rate (LCU per US$, period average)`,
+    agriculture_forestry_fishing_gdp = `Agriculture, forestry, and fishing, value added (% of GDP)`,
+    trade_gdp = `Trade (% of GDP)`,
+    population = `Population, total`,
+    urban_population = `Urban population (% of total population)`,
+    poverty_headcount = `Poverty headcount ratio at societal poverty line (% of population)`,
+    unemployment_percentage = `Unemployment, total (% of total labor force) (national estimate)`
+  ) %>%
+  mutate(across(everything(), ~ifelse(. == "..", NA, .)))
+
+# remove columns
+
+# rename Egypt to match between two datasets
+world_development_data <- world_development_data %>%
+  mutate(country = recode(country,
+                          "Egypt, Arab Rep." = "Egypt"))
+
+# remove unnecessary columns and columns with too many missing values
+world_development_data <- world_development_data %>%
+  select(-country_code, -time_code, -poverty_headcount, -unemployment_percentage)
+
+# remove remove unnecessary columns and columns with too many missing values from food prices data
+food_prices_data <- food_prices_data %>%
+  select(-country_code, -cost_vegetables_ppp_usd, -cost_fruits_ppp_usd, -total_food_components_cost, -cost_category, -data_quality)
+```
+
+```{r merge-dataset}
+# merge both dataset
+data <- left_join(food_prices_data, world_development_data, by = c("country", "year"))
+```
+
+```{r filter-final-countries}
+# countries selected for control and treatment
+selected_countries_data <- data %>% 
+  filter(country %in% c("India", "Indonesia", "Philippines", "Mexico", "Brazil", "Kazakhstan", "South Africa", "Colombia", "Peru", "Thailand", "Malaysia", "Egypt")) %>% mutate(across(
+    c(cost_healthy_diet_ppp_usd,
+      annual_cost_healthy_diet_usd,
+      gdp,
+      inflation,
+      exchange_rate,
+      agriculture_forestry_fishing_gdp,
+      trade_gdp,
+      population,
+      urban_population),
+    as.numeric
+  ))
+```
+
+```{r set-global-variables}
+# Global variables
+
+predictor_vars <- c(
+      "gdp",
+      "inflation",
+      "exchange_rate",
+      "agriculture_forestry_fishing_gdp",
+      "trade_gdp",
+      "population",
+      "urban_population"
+    )
+
+outcome_var <- "cost_healthy_diet_ppp_usd"
+
+special_predictors <- list(
+    list(outcome_var, 2017, "mean"),
+    list(outcome_var, 2018, "mean"),
+    list(outcome_var, 2019, "mean"),
+    list(outcome_var, 2020, "mean"),
+    list(outcome_var, 2021, "mean")
+    )
+
+treatment_year <- 2022
+pre_period <- 2017:2021
+analysis_period <- 2017:2024
+pre_idx <- which(analysis_period < treatment_year)
+post_idx <- which(analysis_period >= treatment_year)
+```
+
+
+# Descriptive Statistics
+
+```{r descriptive-statistics}
+# descriptive statistics
+
+pre_selected_countries_data <- selected_countries_data %>%
+  filter(year < treatment_year)
+
+desc_table <- pre_selected_countries_data %>%
+  summarise(
+    across(
+      c(cost_healthy_diet_ppp_usd,
+        gdp,
+        inflation,
+        exchange_rate,
+        agriculture_forestry_fishing_gdp,
+        trade_gdp,
+        population,
+        urban_population),
+      list(
+        Observations = ~sum(!is.na(.)),
+        Mean = ~mean(., na.rm = TRUE),
+        SD = ~sd(., na.rm = TRUE),
+        Minimum = ~min(., na.rm = TRUE),
+        Maximum = ~max(., na.rm = TRUE)
+      )
+    )
+  ) %>%
+  pivot_longer(
+    everything(),
+    names_to = c("Variable", "Statistic"),
+    names_sep = "_(?=[^_]+$)"
+  ) %>%
+  pivot_wider(
+    names_from = Statistic,
+    values_from = value
+  )
+
+desc_table <- desc_table %>%
+  mutate(across(where(is.numeric), ~ round(.x, 3)))
+
+desc_table
+```
+
+
+```{r add-country-id}
+# Add country id
+
+selected_countries_data$country_id <-
+  as.numeric(factor(selected_countries_data$country))
+
+selected_countries_data <- as.data.frame(selected_countries_data)
+
+# Get Egypt's country ID
+treatment_id <- unique(
+  selected_countries_data$country_id[
+    selected_countries_data$country == "Egypt"
+  ]
+)
+```
+
+# Synthetic Control Analysis
+
+```{r run-synthetic-control}
+
+# Construct a synthetic version of Egypt using a weighted
+# combination of donor countries that minimizes
+# pre-treatment prediction error.
+
+dataprep_out <-
+  dataprep(
+    foo = selected_countries_data,
+    predictors = predictor_vars,
+    dependent = outcome_var,
+    special.predictors = special_predictors,
+    unit.variable = "country_id",
+    time.variable = "year",
+    treatment.identifier = treatment_id,
+    controls.identifier = setdiff(unique(selected_countries_data$country_id), c(treatment_id)),
+    time.predictors.prior = pre_period,
+    time.optimize.ssr = pre_period,
+    unit.names.variable = "country",
+    time.plot = analysis_period
+  )
+
+synth_out <- synth(dataprep_out)
+```
+
+
+```{r check-weights}
+# Check predictor and donor country weights
+
+synth_tables <- synth.tab(
+  dataprep.res = dataprep_out,
+  synth.res = synth_out
+)
+
+# Donor countries weight
+synth_tables$tab.w
+
+# Predictor weight
+synth_tables$tab.v
+```
+
+```{r compare-treated-synthetic-predictors}
+# Compare predictors before and after constructing synthetic control
+
+round(synth_tables$tab.pred,2)
+```
+
+
+```{r actual-vs-synthetic-egypt}
+# Plot Cost of Healthy Diet in Egypt and its synthetic version
+
+path.plot(
+  dataprep.res = dataprep_out,
+  synth.res = synth_out,
+  Ylab = "Cost of Healthy Diet",
+  Xlab = "Year",
+  Legend = c("Egypt", "Synthetic Egypt"),
+  abline(v=treatment_year, lty=2),
+  Main = "Cost of Healthy Diet in Egypt and its synthetic version"
+)
+```
+
+```{r gap-plot}
+# Plot gap between Cost of Healthy Diet in Egypt and its synthetic version
+
+gaps.plot(synth.res = synth_out,
+          dataprep.res = dataprep_out,
+          tr.intake = treatment_year,
+          Ylab = "Effect",
+          Xlab = "Year",
+          Main = "Gap between Cost of Healthy Diet in Egypt and its synthetic version")
+```
+
+
+
+
+```{r}
+# Egypt gap
+egypt_gap <- dataprep_out$Y1plot - 
+  dataprep_out$Y0plot %*% synth_out$solution.w
+
+egypt_gap
+```
+
+
+```{r}
+# Store gaps for placebo tests
+store <- matrix(
+  NA,
+  nrow = length(analysis_period),
+  ncol = length(unique(selected_countries_data$country_id))
+)
+
+colnames(store) <- unique(selected_countries_data$country)
+rownames(store) <- analysis_period
+
+# Put Egypt gap in the first column
+store[, "Egypt"] <- egypt_gap
+
+```
+
+# Placebo Tests
+
+```{r}
+# Run placebo test for all donor countries
+
+# All countries except Egypt
+placebo_ids <- setdiff(
+  unique(selected_countries_data$country_id),
+  treatment_id
+)
+
+for (placebo_id in placebo_ids) {
+  
+  placebo_country <- unique(
+    selected_countries_data$country[
+      selected_countries_data$country_id == placebo_id
+    ]
+  )
+  
+  print(paste("Running placebo:", placebo_country))
+  
+  placebo_dataprep <- dataprep(
+    foo = selected_countries_data,
+    predictors = predictor_vars,
+    dependent = outcome_var,
+    special.predictors = special_predictors,
+    unit.variable = "country_id",
+    time.variable = "year",
+    treatment.identifier = placebo_id,
+    # Exclude BOTH the placebo country and actual treated country (Egypt)
+    controls.identifier = setdiff(
+      unique(selected_countries_data$country_id),
+      c(placebo_id, treatment_id)
+    ),
+    
+    time.predictors.prior = pre_period,
+    time.optimize.ssr = pre_period,
+    
+    unit.names.variable = "country",
+    time.plot = analysis_period
+  )
+  
+  placebo_synth <- synth(placebo_dataprep)
+  
+  placebo_gap <- placebo_dataprep$Y1plot -
+    placebo_dataprep$Y0plot %*% placebo_synth$solution.w
+  
+  store[, placebo_country] <- placebo_gap
+}
+```
+
+
+```{r placebo-plot}
+# Plot placebo graph
+placebo_gap <- store
+
+# calculate MSE
+mse <- apply(placebo_gap[pre_idx,]^2, 2, mean)
+
+egypt.mse <- mse["Egypt"]
+
+# remove placebo units with pre-treatment MSE more than five times that of Egypt
+placebo_gap <- placebo_gap[, mse < 5 * egypt.mse]
+
+plot(
+  analysis_period,
+  placebo_gap[, "Egypt"],
+  type = "n",
+  ylim = range(placebo_gap, na.rm = TRUE),
+  xlab = "Year",
+  ylab = "Gap in Cost of Healthy Diet",
+  main = "Placebo Test Results for the Cost of a Healthy Diet"
+)
+
+for(i in setdiff(
+  1:ncol(placebo_gap),
+  which(colnames(placebo_gap) == "Egypt")
+)){
+  lines(
+    analysis_period,
+    placebo_gap[, i],
+    col = "gray"
+  )
+}
+
+lines(
+  analysis_period,
+  placebo_gap[, "Egypt"],
+  lwd = 2,
+  col = "black"
+)
+
+abline(v = treatment_year, lty = 2)
+abline(h = 0, lty = 3)
+
+```
+
+```{r pre-post-rmspe-all}
+# Check pre and post RMSPE for all countries
+
+mse <- apply(placebo_gap[pre_idx,]^2, 2, mean)
+
+# Calculate pre-treatment RMSPE
+pre_rmspe <- sqrt(
+  apply(placebo_gap[pre_idx, ]^2, 2, mean)
+)
+
+# Calculate post-treatment RMSPE
+post_rmspe <- sqrt(
+  apply(placebo_gap[post_idx, ]^2, 2, mean)
+)
+
+# Calculate post/pre RMSPE ratio
+rmspe_ratio <- post_rmspe / pre_rmspe
+
+# Create summary table
+rmspe_results <- data.frame(
+  country = names(pre_rmspe),
+  pre_rmspe = as.numeric(pre_rmspe),
+  post_rmspe = as.numeric(post_rmspe),
+  rmspe_ratio = as.numeric(rmspe_ratio)
+)
+
+rmspe_results
+```
+
+# Sensitivity Analysis
+
+```{r sensitivity-leave-one-out}
+# Run sensitivity: leave-one-out test
+
+# Store results
+loo_results <- data.frame()
+
+# Loop through each donor to leave out
+for (leave_out_id in placebo_ids) {
+  
+  # Name of country being left out
+  leave_out_country <- unique(
+    selected_countries_data$country[
+      selected_countries_data$country_id == leave_out_id
+    ]
+  )
+  
+  cat("Leaving out:", leave_out_country, "\n")
+  
+  # Donor pool excluding treatment country AND the country being left out
+  controls <- setdiff(
+    unique(selected_countries_data$country_id),
+    c(treatment_id, leave_out_id)
+  )
+  
+  # Prepare data
+  loo_dataprep <- dataprep(
+    foo = selected_countries_data,
+    predictors = predictor_vars,
+    dependent = outcome_var,
+    special.predictors = special_predictors,
+    unit.variable = "country_id",
+    time.variable = "year",
+    treatment.identifier = treatment_id,
+    controls.identifier = controls,
+    time.predictors.prior = pre_period,
+    time.optimize.ssr = pre_period,
+    unit.names.variable = "country",
+    time.plot = analysis_period
+  )
+  
+  # Run synthetic control
+  loo_synth <- synth(loo_dataprep)
+  
+  # Calculate gap: actual Egypt - synthetic Egypt
+  gap <- loo_dataprep$Y1plot -
+    loo_dataprep$Y0plot %*% loo_synth$solution.w
+  
+  # Pre-treatment RMSPE: 2017-2021
+  pre_rmspe <- sqrt(
+    mean(gap[pre_idx]^2)
+  )
+  
+  # Post-treatment RMSPE: 2022-2024
+  post_rmspe <- sqrt(
+    mean(gap[post_idx]^2)
+  )
+  
+  # Post/pre RMSPE ratio
+  rmspe_ratio <- post_rmspe / pre_rmspe
+  
+  # Average post-treatment gap
+  avg_post_gap <- mean(gap[post_idx])
+  
+  # Store results
+  loo_results <- bind_rows(
+    loo_results,
+    data.frame(
+      left_out_id = leave_out_id,
+      left_out_country = leave_out_country,
+      pre_rmspe = pre_rmspe,
+      post_rmspe = post_rmspe,
+      rmspe_ratio = rmspe_ratio,
+      avg_post_gap = avg_post_gap
+    )
+  )
+}
+
+loo_results
+```
+
+# Treatment Effects
+
+```{r}
+# Gap and percentage effect between actual and synthetic Egypt by year
+
+egypt_gap_table <- data.frame(
+  year = analysis_period,
+  actual_egypt = as.numeric(dataprep_out$Y1plot),
+  synthetic_egypt = as.numeric(
+    dataprep_out$Y0plot %*% synth_out$solution.w
+  ),
+  gap = as.numeric(egypt_gap)
+) %>%
+  mutate(
+    percentage_effect = (gap / synthetic_egypt) * 100
+  )
+
+egypt_gap_table_display <- egypt_gap_table %>%
+  mutate(
+    actual_egypt = round(actual_egypt, 3),
+    synthetic_egypt = round(synthetic_egypt, 3),
+    gap = round(gap, 3),
+    percentage_effect = round(percentage_effect, 2)
+  )
+
+egypt_gap_table_display
+```
+```{r}
+# Average post-treatment effects, 2022-2024
+
+avg_post_gap <- mean(
+  egypt_gap_table$gap[egypt_gap_table$year >= treatment_year]
+)
+
+avg_post_percentage_effect <- mean(
+  egypt_gap_table$percentage_effect[
+    egypt_gap_table$year >= treatment_year
+  ]
+)
+
+cat(
+  "Average post-treatment gap: $",
+  round(avg_post_gap, 3),
+  " per person per day\n"
+)
+
+cat(
+  "Average post-treatment percentage effect:",
+  round(avg_post_percentage_effect, 2),
+  "%\n"
+)
+```
+
