@@ -7,10 +7,10 @@ This was particularly relevant for Egypt, where wheat and bread are staples and 
 important role in the food system. Rising global grain prices, combined with domestic inflation and 
 currency depreciation, may have increased the cost of food in Egypt.
 
-This project uses the Synthetic Control Method to examine how Egypt's cost of a healthy diet changed 
-after the onset of the war in 2022, relative to a synthetic counterfactual. Using data from the World Bank, 
-I construct a synthetic Egypt from 11 donor countries and compare its estimated trajectory with Egypt's 
-observed diet costs from 2022 to 2024.
+This project uses the Synthetic Control Method to evaluate how Egypt's cost of a healthy diet evolved following 
+the onset of the Russia–Ukraine war in 2022, relative to a synthetic counterfactual constructed from comparable 
+countries. Using data from the World Bank, I construct a synthetic Egypt from 11 donor countries and compare its 
+estimated trajectory with Egypt's observed diet costs from 2022 to 2024.
 
 The average post-treatment gap was $0.897 per person per day, approximately 18.40% above the synthetic counterfactual. 
 Placebo and leave-one-out analyses were used to assess the relative magnitude and robustness of the estimated divergence.
@@ -45,13 +45,14 @@ The analysis uses data from the World Bank's two datasets:
 ### Study Period
 
 - **Pre-treatment period:** 2017–2021
-- **Post-treatment period:** 2022–2024, following the onset of the Russia–Ukraine war.
+- **Post-treatment period:** 2022–2024, with 2022 designated as the treatment year corresponding to the onset of the Russia–Ukraine war.
 
 ## Methodology
 
-This study uses the Synthetic Control Method (SCM) to estimate the divergence in Egypt's cost of a healthy diet 
-following the onset of the Russia–Ukraine war. The method constructs a synthetic version of Egypt as a weighted 
-combination of comparable countries to approximate Egypt's pre-treatment outcome trajectory.
+This study uses the Synthetic Control Method (SCM), which constructs a weighted combination of comparison countries 
+to estimate what would have happened in the absence of an intervention or shock. The method creates a synthetic version 
+of Egypt that closely matches Egypt's pre-treatment trajectory in the cost of a healthy diet, providing a counterfactual 
+for comparison after the onset of the Russia–Ukraine war.
 
 Egypt is the treated country, and the donor pool consists of 11 countries with comparable economic and demographic characteristics. 
 Egypt was chosen because of its reliance on imported wheat and cereals. The donor countries were used to construct a synthetic 
@@ -134,6 +135,14 @@ exchange-rate changes, and other economic shocks, which may also have contribute
 - Potential spillover effects: The war affected global food and energy markets, potentially influencing donor 
 countries as well as Egypt. These spillovers may weaken the validity of the synthetic control as a counterfactual.
 
+## Conclusion
+
+Using the Synthetic Control Method, this study finds that Egypt's cost of a healthy diet rose above 
+its synthetic counterfactual following the onset of the Russia–Ukraine war. The divergence remained substantial 
+in placebo and leave-one-out analyses, suggesting that Egypt's increase was relatively large compared with the 
+experience of similar countries. However, the results should be interpreted in light of potential confounding 
+factors and spillover effects, and the divergence cannot be attributed solely to the Russia–Ukraine war.
+
 ## Repository Structure
 
 ```text
@@ -146,9 +155,9 @@ Russia-Ukraine-War-Diet-Cost/
 │   ├── price_of_healthy_diet_clean.csv
 │   └── world_bank_indicators.csv
 ├── figures/
-│   ├── actual-vs-synthetic-egypt.PNG
-│   ├── gap-plot.PNG
-│   └── placebo-plot.PNG
+│   ├── actual-vs-synthetic-egypt.png
+│   ├── gap-plot.png
+│   └── placebo-plot.png
 └── .gitignore
 ```
 
