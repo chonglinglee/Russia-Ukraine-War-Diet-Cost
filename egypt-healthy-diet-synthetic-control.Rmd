@@ -23,7 +23,8 @@ if (!dir.exists("figures")) {
 
 # Save generated figures in the figures folder
 knitr::opts_chunk$set(
-  fig.path = "figures/"
+  fig.path = "figures/",
+  dev = "png"
 )
 
 food_prices_data <- read_csv(file.path(data_path, "price_of_healthy_diet_clean.csv"))
