@@ -1,13 +1,19 @@
-# Russia Ukraine-War's Impact on the Cost of a Healthy Diet
-
-```r
-
-
-
-
-```
+# Russia–Ukraine War and the Cost of a Healthy Diet in Egypt
 
 ## Overview
+
+The 2022 Russia–Ukraine war disrupted global grain markets, putting pressure on food prices worldwide. 
+This was particularly relevant for Egypt, where wheat and bread are staples and wheat imports play an 
+important role in the food system. Rising global grain prices, combined with domestic inflation and 
+currency depreciation, may have increased the cost of food in Egypt.
+
+This project uses the Synthetic Control Method to examine how Egypt's cost of a healthy diet changed 
+after the onset of the war in 2022, relative to a synthetic counterfactual. Using data from the World Bank, 
+I construct a synthetic Egypt from 11 donor countries and compare its estimated trajectory with Egypt's 
+observed diet costs from 2022 to 2024.
+
+The average post-treatment gap was $0.897 per person per day, approximately 18.40% above the synthetic counterfactual. 
+Placebo and leave-one-out analyses were used to assess the relative magnitude and robustness of the estimated divergence.
 
 ## Data Sources
 
@@ -39,52 +45,53 @@ The analysis uses data from the World Bank's two datasets:
 ### Study Period
 
 - **Pre-treatment period:** 2017–2021
-- **Post-treatment period:** 2022-2024, following the onset of the Russia–Ukraine war.
+- **Post-treatment period:** 2022–2024, following the onset of the Russia–Ukraine war.
 
 ## Methodology
 
-This study uses the Synthetic Control Method (SCM) to estimate the impact of the Russia–Ukraine war on the cost of a healthy diet in Egypt. 
-The method constructs a synthetic version of Egypt as a weighted combination of comparable countries to approximate Egypt's pre-treatment outcome trajectory.
+This study uses the Synthetic Control Method (SCM) to estimate the divergence in Egypt's cost of a healthy diet 
+following the onset of the Russia–Ukraine war. The method constructs a synthetic version of Egypt as a weighted 
+combination of comparable countries to approximate Egypt's pre-treatment outcome trajectory.
 
 Egypt is the treated country, and the donor pool consists of 11 countries with comparable economic and demographic characteristics. 
-Egypt was chosen as the treated country because Egypt relied on imported wheat or cereals. The donor pool was selected to include 
-countries that did not rely as heavily on imported wheat or cereals, with the aim of constructing a synthetic Egypt that represents 
-how Egypt's cost of a healthy diet might have been without the grain shock.
+Egypt was chosen because of its reliance on imported wheat and cereals. The donor countries were used to construct a synthetic 
+Egypt that approximates the trajectory of Egypt's cost of a healthy diet in the absence of the shock.
 
-The outcome variable is the cost of a healthy diet per person per day (PPP USD). Predictors include GDP per capita, inflation, exchange rate, 
-agriculture, forestry, and fishing value added as a percentage of GDP, trade as a percentage of GDP, total population, urban population, and lagged diet costs.
-
-The model is fitted using the pre-treatment period (2017–2021), with 2022 designated as the start of the treatment period. 
-The observed cost of a healthy diet in Egypt is then compared with the estimated synthetic counterfactual for 2022–2024. 
-The difference between the two trajectories represents the estimated treatment effect relative to the synthetic control.
+The model is fitted using the pre-treatment period (2017–2021), with 2022 designated as the start of the treatment 
+period. The observed cost of a healthy diet in Egypt is then compared with the estimated synthetic counterfactual 
+for 2022–2024. The difference between the two trajectories represents the estimated divergence relative to the 
+synthetic control, which may reflect the effects of the war as well as other concurrent economic factors.
 
 ## Results
 
-A Synthetic Egypt was created by assigning different weights to countries in the donor pool so that the synthetic unit closely follows Egypt
-before 2022. The countries for creating synthetic Egypt was Indonesia (64.5%), Thailand (29.2%), South Africa (6.0%), and the Philippines (0.3%)
-while the remaining countries received zero weight.
-We assumed that without exposure to the grain shock, Egypt's healthy diet cost would have followed the same trajectory as synthetic Egypt. For this
-interpretation to be valid, Egypt and Synthetic Egypt should have similar pre-treatment trends.
+Synthetic Egypt was constructed as a weighted combination of donor countries to match Egypt's pre-treatment trajectory. 
+Indonesia received the largest weight (64.5%), followed by Thailand (29.2%), South Africa (6.0%), and the Philippines (0.3%). 
+The remaining countries received zero weight.
+
+The synthetic control provides an estimate of how Egypt's cost of a healthy diet might have evolved in the absence of the shock. 
+The credibility of this counterfactual depends in part on how closely synthetic Egypt matches Egypt during the pre-treatment period.
 
 RMSPE measures the difference between the observed outcome and the synthetic control over a given period. 
-The pre-treatment RMSPE was 0.141, compared with a post-treatment RMSPE of 7.47. This indicates that the 
-synthetic control closely matched Egypt before 2022, while the difference between Egypt and synthetic Egypt 
-became substantially larger after 2022. 
+The pre-treatment RMSPE was 0.141, and the post-to-pre RMSPE ratio was 7.47. This indicates that the post-treatment 
+prediction error was substantially larger than the pre-treatment error.
 
 ### Actual vs. Synthetic Egypt
 ![Actual vs. Synthetic Egypt](figures/actual-vs-synthetic-egypt.png)
 
-During the pre-treatment period (2017–2021), the actual and synthetic series follow relatively similar trends. 
-Following the onset of the treatment in 2022, the two series begin to diverge, with the actual cost of a healthy 
-diet increasing more rapidly than the synthetic counterfactual. The gap remains positive through 2024, indicating 
-that the cost of a healthy diet in Egypt was higher than the estimated counterfactual.
+During the pre-treatment period (2017–2021), Egypt's actual cost of a healthy diet followed a trajectory similar to 
+synthetic Egypt. After 2022, the two series diverged, with Egypt's actual cost increasing more rapidly and remaining 
+above the synthetic counterfactual through 2024.
+
+### Estimated Post-Treatment Difference
+During 2022–2024, the average gap between Egypt's actual cost of a healthy diet and its synthetic counterfactual was 
+$0.897 per person per day, approximately 18.40% higher than the synthetic estimate.
 
 ### Gap Plot
 ![Gap Plot](figures/gap-plot.png)
 
-The gap plot shows the difference between Egypt's actual cost of a healthy diet and its synthetic counterfactual. 
-The gap remains relatively small before 2022, then becomes positive and widens after the start of the treatment period. 
-This pattern is consistent with an increase in Egypt's diet costs relative to the synthetic control.
+The gap plot shows the difference between Egypt's actual cost and its synthetic counterfactual. 
+The gap was relatively small before 2022 and became positive and widened afterward, indicating higher 
+diet costs in Egypt relative to the synthetic control.
 
 ### Placebo Analysis
 ![Placebo Analysis](figures/placebo-plot.png)
@@ -93,12 +100,39 @@ A placebo test was conducted to assess how Egypt's estimated gap compares with t
 Each country in the donor pool was sequentially reassigned as the treated country. For each placebo country, 
 a synthetic control was constructed using the remaining countries, and the gap between the observed and synthetic outcomes was calculated.
 
-Compared with Egypt, all placebo countries exhibit smaller post-treatment deviations from their respective synthetic controls. 
-This suggests that Egypt experienced a relatively large increase in the cost of a healthy diet compared with its synthetic control.
+To improve comparability, placebo units with pre-treatment MSE more than five times that of Egypt were excluded 
+from the placebo distribution. These units were Kazakhstan and Thailand. This restriction focuses the comparison 
+on placebo units with a reasonably good pre-treatment fit.
 
+Compared with Egypt, all remaining placebo countries exhibit smaller post-treatment gaps relative to their 
+respective synthetic controls. This suggests that Egypt experienced a relatively large divergence in the cost 
+of a healthy diet compared with its synthetic control.
 
 ## Robustness Checks
 
+### Leave-One-Out Sensitivity Analysis
+
+A leave-one-out sensitivity analysis was conducted by sequentially removing each of the four donor countries with 
+a positive weight in the baseline synthetic control and re-estimating the model.
+Across all specifications, the post-to-pre RMSPE ratio remained substantially greater than one, indicating that the post-treatment 
+discrepancy was consistently larger than the pre-treatment discrepancy.
+
+Excluding Thailand produced the largest change in the ratio, reducing it from 7.47 in the baseline model to 5.53. 
+The ratio remained substantially greater than one, suggesting that the post-treatment divergence was not driven solely by 
+Thailand. Excluding Thailand also increased the pre-treatment RMSPE from 0.141 to 0.222, indicating that Thailand played 
+an important role in matching Egypt's pre-treatment trajectory.
+
+## Potential Limitations
+
+- Small donor pool: The donor pool consists of 11 countries, with most of the synthetic control's weight assigned to 
+Indonesia and Thailand. This limits the range of potential comparison countries and makes the counterfactual more 
+dependent on these two countries.
+- Limited pre-treatment period: The pre-treatment period covers only 2017–2021, making it difficult to assess whether 
+the relationship between Egypt and synthetic Egypt would have continued after 2021 in the absence of the shock.
+- Potential confounding factors: The Russia–Ukraine war coincided with other economic changes, including inflation, 
+exchange-rate changes, and other economic shocks, which may also have contributed to the observed divergence.
+- Potential spillover effects: The war affected global food and energy markets, potentially influencing donor 
+countries as well as Egypt. These spillovers may weaken the validity of the synthetic control as a counterfactual.
 
 ## Repository Structure
 
@@ -112,10 +146,9 @@ Russia-Ukraine-War-Diet-Cost/
 │   ├── price_of_healthy_diet_clean.csv
 │   └── world_bank_indicators.csv
 ├── figures/
-│   ├── actual-vs-synthetic-egypt.pdf
-│   ├── gap-plot.pdf
-│   └── placebo-plot.pdf
+│   ├── actual-vs-synthetic-egypt.PNG
+│   ├── gap-plot.PNG
+│   └── placebo-plot.PNG
 └── .gitignore
 ```
 
-## Skills Demonstrated

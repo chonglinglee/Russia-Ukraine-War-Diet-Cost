@@ -242,7 +242,7 @@ round(synth_tables$tab.pred,2)
 
 
 ```{r actual-vs-synthetic-egypt}
-# Plot Cost of Healthy Diet in Egypt and its synthetic version
+# Plot Cost of a Healthy Diet in Egypt and its synthetic version
 
 path.plot(
   dataprep.res = dataprep_out,
@@ -251,19 +251,19 @@ path.plot(
   Xlab = "Year",
   Legend = c("Egypt", "Synthetic Egypt"),
   abline(v=treatment_year, lty=2),
-  Main = "Cost of Healthy Diet in Egypt and its synthetic version"
+  Main = "Cost of a Healthy Diet in Egypt and its Synthetic Version"
 )
 ```
 
 ```{r gap-plot}
-# Plot gap between Cost of Healthy Diet in Egypt and its synthetic version
+# Plot gap between Cost of a Healthy Diet in Egypt and its synthetic version
 
 gaps.plot(synth.res = synth_out,
           dataprep.res = dataprep_out,
           tr.intake = treatment_year,
           Ylab = "Effect",
           Xlab = "Year",
-          Main = "Gap between Cost of Healthy Diet in Egypt and its synthetic version")
+          Main = "Gap between Cost of a Healthy Diet in Egypt and its Synthetic Version")
 ```
 
 
@@ -364,7 +364,7 @@ plot(
   type = "n",
   ylim = range(placebo_gap, na.rm = TRUE),
   xlab = "Year",
-  ylab = "Gap in Cost of Healthy Diet",
+  ylab = "Gap in Cost of a Healthy Diet",
   main = "Placebo Test Results for the Cost of a Healthy Diet"
 )
 
