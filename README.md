@@ -125,14 +125,14 @@ an important role in matching Egypt's pre-treatment trajectory.
 
 ## Potential Limitations
 
-- Small donor pool: The donor pool consists of 11 countries, with most of the synthetic control's weight assigned to 
+- **Small donor pool:** The donor pool consists of 11 countries, with most of the synthetic control's weight assigned to 
 Indonesia and Thailand. This limits the range of potential comparison countries and makes the counterfactual more 
 dependent on these two countries.
-- Limited pre-treatment period: The pre-treatment period covers only 2017–2021, making it difficult to assess whether 
+- **Limited pre-treatment period:** The pre-treatment period covers only 2017–2021, making it difficult to assess whether 
 the relationship between Egypt and synthetic Egypt would have continued after 2021 in the absence of the shock.
-- Potential confounding factors: The Russia–Ukraine war coincided with other economic changes, including inflation, 
+- **Potential confounding factors:** The Russia–Ukraine war coincided with other economic changes, including inflation, 
 exchange-rate changes, and other economic shocks, which may also have contributed to the observed divergence.
-- Potential spillover effects: The war affected global food and energy markets, potentially influencing donor 
+- **Potential spillover effects:** The war affected global food and energy markets, potentially influencing donor 
 countries as well as Egypt. These spillovers may weaken the validity of the synthetic control as a counterfactual.
 
 ## Conclusion
